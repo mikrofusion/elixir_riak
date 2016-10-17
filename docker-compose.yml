@@ -1,0 +1,38 @@
+version: "2"
+services:
+  coordinator:
+    image: "riak-kv"
+    build:
+      context: .
+    ports:
+      - "8087:8087"
+      - "8098:8098"
+      - "8093:8093"
+    environment:
+      - CLUSTER_NAME=riakkv
+    labels:
+      - "com.basho.riak.cluster.name=riak-kv"
+    volumes:
+      - "./riak/schemas:/etc/riak/schemas"
+      - "./riak/logs:/var/log/riak"
+      - data:/var/lib/riak
+    network_mode: bridge
+  member:
+    image: "riak-kv"
+    build:
+      context: .
+    ports:
+      - "8087"
+      - "8098"
+    labels:
+      - "com.basho.riak.cluster.name=riak-kv"
+    links:
+      - coordinator
+    network_mode: bridge
+    depends_on:
+      - coordinator
+    environment:
+      - CLUSTER_NAME=riakkv
+      - COORDINATOR_NODE=coordinator
+volumes:
+  data: {}
