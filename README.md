@@ -15,12 +15,22 @@ https://hub.docker.com/r/basho/riak-kv/
 https://gist.github.com/angrycub/dcd234068fac23aa6de4 # error messages
 https://github.com/basho-labs/docker-images
 https://raw.githubusercontent.com/lexlapax/dockerfile-riak/master/fixconfigs.sh
+https://github.com/drewkerrigan/riak-elixir-client
 
 iex -S mix
-{:ok, pid} = Riak.Connection.start_link('127.0.0.1', 8087)
 o = Riak.Object.create(bucket: "user", key: "my_key", data: "Han Solo")
-Riak.put(pid, o)
-o = Riak.find(pid, "user", "my_key")
+Riak.put(o)
+Riak.find("user", "my_key")
+
+# list keys
+iex(22)> {:ok, pid} = Riak.Connection.start_link('127.0.0.1', 8087)
+{:ok, #PID<0.238.0>}
+iex(23)> :riakc_pb_socket.list_keys(pid, <<"groceries">>)
+{:ok, []}
+iex(24)> :riakc_pb_socket.list_keys(pid, <<"user">>)
+{:ok, ["my_key"]}
+iex(25)>
+
 
 # make sure the server is up
 tail -f raik/logs/console.log

@@ -1,4 +1,5 @@
 version: "2"
+
 services:
   coordinator:
     image: "riak-kv"
@@ -15,24 +16,92 @@ services:
     volumes:
       - "./riak/schemas:/etc/riak/schemas"
       - "./riak/logs:/var/log/riak"
-      - data:/var/lib/riak
+      - coordinator_data:/var/lib/riak
     network_mode: bridge
-  member:
+
+  member_1:
     image: "riak-kv"
     build:
       context: .
     ports:
-      - "8087"
-      - "8098"
+      - "11087:8087"
+      - "11098:8098"
     labels:
       - "com.basho.riak.cluster.name=riak-kv"
+    volumes:
+      - member_1_data:/var/lib/riak
+    network_mode: bridge
     links:
       - coordinator
-    network_mode: bridge
     depends_on:
       - coordinator
     environment:
       - CLUSTER_NAME=riakkv
       - COORDINATOR_NODE=coordinator
+
+  member_2:
+    image: "riak-kv"
+    build:
+      context: .
+    ports:
+      - "12087:8087"
+      - "12098:8098"
+    labels:
+      - "com.basho.riak.cluster.name=riak-kv"
+    volumes:
+      - member_2_data:/var/lib/riak
+    network_mode: bridge
+    links:
+      - coordinator
+    depends_on:
+      - coordinator
+    environment:
+      - CLUSTER_NAME=riakkv
+      - COORDINATOR_NODE=coordinator
+
+  member_3:
+    image: "riak-kv"
+    build:
+      context: .
+    ports:
+      - "13087:8087"
+      - "13098:8098"
+    labels:
+      - "com.basho.riak.cluster.name=riak-kv"
+    volumes:
+      - member_3_data:/var/lib/riak
+    network_mode: bridge
+    links:
+      - coordinator
+    depends_on:
+      - coordinator
+    environment:
+      - CLUSTER_NAME=riakkv
+      - COORDINATOR_NODE=coordinator
+
+  member_4:
+    image: "riak-kv"
+    build:
+      context: .
+    ports:
+      - "14087:8087"
+      - "14098:8098"
+    labels:
+      - "com.basho.riak.cluster.name=riak-kv"
+    volumes:
+      - member_4_data:/var/lib/riak
+    network_mode: bridge
+    links:
+      - coordinator
+    depends_on:
+      - coordinator
+    environment:
+      - CLUSTER_NAME=riakkv
+      - COORDINATOR_NODE=coordinator
+
 volumes:
-  data: {}
+  coordinator_data: {}
+  member_1_data: {}
+  member_2_data: {}
+  member_3_data: {}
+  member_4_data: {}
