@@ -66,6 +66,8 @@ elixirriak_coordinator_1 exited with code 1
 
 
 
+curl 'localhost:8098/riak/user?keys=true' | prettyjson
+
 
 
 ##

@@ -1,0 +1,49 @@
+version: "2"
+
+services:
+  coordinator:
+    ports:
+      - "8087:8087"
+      - "8098:8098"
+      - "8093:8093"
+    environment:
+      - CLUSTER_NAME=riakkv
+    volumes:
+      - "./riak/schemas:/etc/riak/schemas"
+      - "./riak/logs:/var/log/riak"
+      - coordinator_data:/var/lib/riak
+
+  member_1:
+    ports:
+      - "11087:8087"
+      - "11098:8098"
+    volumes:
+      - member_1_data:/var/lib/riak
+
+  member_2:
+    ports:
+      - "12087:8087"
+      - "12098:8098"
+    volumes:
+      - member_2_data:/var/lib/riak
+
+  member_3:
+    ports:
+      - "13087:8087"
+      - "13098:8098"
+    volumes:
+      - member_3_data:/var/lib/riak
+
+  member_4:
+    ports:
+      - "14087:8087"
+      - "14098:8098"
+    volumes:
+      - member_4_data:/var/lib/riak
+
+volumes:
+  coordinator_data: {}
+  member_1_data: {}
+  member_2_data: {}
+  member_3_data: {}
+  member_4_data: {}

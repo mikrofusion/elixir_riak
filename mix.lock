@@ -1,4 +1,5 @@
-%{"hamcrest": {:hex, :hamcrest, "0.1.2", "2f06fad05983ce98a7832c4a7a508aab935b68865fdf607d30a030c129ec1365", [:rebar, :make], []},
+%{"espec": {:hex, :espec, "1.1.0", "ffc4c9e88e117bdbf891294044ccd2cc353a2c49fe0c5a50d9bdfadf08b384b8", [:mix], [{:meck, "~> 0.8.4", [hex: :meck, optional: false]}]},
+  "hamcrest": {:hex, :hamcrest, "0.1.2", "2f06fad05983ce98a7832c4a7a508aab935b68865fdf607d30a030c129ec1365", [:rebar, :make], []},
   "linguist": {:hex, :linguist, "0.1.5", "98739fc47ac5d951322a57c787f46786c95b53d800105d43a0631633e7f9da9b", [:mix], []},
   "meck": {:hex, :meck, "0.8.4", "59ca1cd971372aa223138efcf9b29475bde299e1953046a0c727184790ab1520", [:rebar, :make], []},
   "pooler": {:hex, :pooler, "1.5.0", "0fd4be5d2976e6a2e9a1617623031758c26f200c1fca89e4a3c542747bec6371", [:rebar, :make], []},

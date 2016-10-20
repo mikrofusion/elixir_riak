@@ -2,69 +2,67 @@ version: "2"
 
 services:
   coordinator:
-    image: "riak-kv"
-    build:
-      context: .
-    labels:
-      - "com.basho.riak.cluster.name=riak-kv"
+    image: "riak-kv-test"
+    ports:
+      - "28087:8087"
+      - "28098:8098"
+      - "28093:8093"
+    environment:
+      - CLUSTER_NAME=riakkv-test
     network_mode: bridge
 
   member_1:
-    image: "riak-kv"
-    build:
-      context: .
-    labels:
-      - "com.basho.riak.cluster.name=riak-kv"
+    image: "riak-kv-test"
+    ports:
+      - "21087:8087"
+      - "21098:8098"
     network_mode: bridge
     links:
       - coordinator
     depends_on:
       - coordinator
     environment:
-      - CLUSTER_NAME=riakkv
+      - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
 
   member_2:
-    image: "riak-kv"
-    build:
-      context: .
-    labels:
-      - "com.basho.riak.cluster.name=riak-kv"
+    image: "riak-kv-test"
+    ports:
+      - "22087:8087"
+      - "22098:8098"
     network_mode: bridge
     links:
       - coordinator
     depends_on:
       - coordinator
     environment:
-      - CLUSTER_NAME=riakkv
+      - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
 
   member_3:
-    image: "riak-kv"
-    build:
-      context: .
-    labels:
-      - "com.basho.riak.cluster.name=riak-kv"
+    image: "riak-kv-test"
+    ports:
+      - "23087:8087"
+      - "23098:8098"
     network_mode: bridge
     links:
       - coordinator
     depends_on:
       - coordinator
     environment:
-      - CLUSTER_NAME=riakkv
+      - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
 
   member_4:
-    image: "riak-kv"
-    build:
-      context: .
-    labels:
-      - "com.basho.riak.cluster.name=riak-kv"
+    image: "riak-kv-test"
+    ports:
+      - "24087:8087"
+      - "24098:8098"
     network_mode: bridge
     links:
       - coordinator
     depends_on:
       - coordinator
     environment:
-      - CLUSTER_NAME=riakkv
+      - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
