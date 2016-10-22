@@ -31,7 +31,8 @@ dev-init:
 # test container commands
 test-start:
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml -p riaktest up -d 
-	test-init
+	sleep 5
+	make test-init
 
 test-status:
 	docker-compose -p riaktest exec coordinator riak-admin cluster status
@@ -43,12 +44,12 @@ test-stop:
 	docker-compose -p riaktest down
 
 test-init:
-	docker-compose -p riakdev exec coordinator riak-admin bucket-type create maps '{"props":{"datatype":"map"}}'
-	docker-compose -p riakdev exec coordinator riak-admin bucket-type activate maps
-	docker-compose -p riakdev exec coordinator riak-admin bucket-type create sets '{"props":{"datatype":"set"}}'
-	docker-compose -p riakdev exec coordinator riak-admin bucket-type activate sets
-	docker-compose -p riakdev exec coordinator riak-admin bucket-type create counters '{"props":{"datatype":"counter"}}'
-	docker-compose -p riakdev exec coordinator riak-admin bucket-type activate counters
+	docker-compose -p riaktest exec coordinator riak-admin bucket-type create maps '{"props":{"datatype":"map"}}'
+	docker-compose -p riaktest exec coordinator riak-admin bucket-type activate maps
+	docker-compose -p riaktest exec coordinator riak-admin bucket-type create sets '{"props":{"datatype":"set"}}'
+	docker-compose -p riaktest exec coordinator riak-admin bucket-type activate sets
+	docker-compose -p riaktest exec coordinator riak-admin bucket-type create counters '{"props":{"datatype":"counter"}}'
+	docker-compose -p riaktest exec coordinator riak-admin bucket-type activate counters
 
 # docker helpers commands
 clean:
