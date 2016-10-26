@@ -33,8 +33,16 @@ http://stackoverflow.com/questions/15950139/completely-confused-about-mapreduce-
 
 
 https://github.com/drewkerrigan/riak-elixir-client
-http://docs.basho.com/riak/kv/2.1.4/configuring/load-balancing-proxy/
 http://docs.basho.com/riak/kv/2.1.4/using/reference/secondary-indexes/
+
+
+http://docs.basho.com/riak/1.2.1/tutorials/fast-track/Loading-Data-and-Running-MapReduce-Queries/
+
+TODO:  put Riak behind HAProxy
+http://docs.basho.com/riak/kv/2.1.4/configuring/load-balancing-proxy/
+
+Solr:
+http://docs.basho.com/riak/kv/2.1.4/configuring/search/
 
 
 ```

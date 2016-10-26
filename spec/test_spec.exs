@@ -93,7 +93,9 @@ defmodule ElixirRiakSpec do
   end
 
 
-  context "secondary indicies (2i)" do
+  context "secondary indexes (2i)" do
+    # http://docs.basho.com/riak/kv/2.1.4/developing/usage/secondary-indexes/
+
     before do
       meta = :riakc_obj.get_update_metadata(subject)
 
@@ -109,19 +111,19 @@ defmodule ElixirRiakSpec do
       {:shared, key: id}
     end
 
-    it "allows you to " do
+    it "fetches the key by name" do
+      # this is similar to the following curl request
       # curl localhost:28098/buckets/bucket/index/name_bin/John
       # {"keys":["PgT0vZYyiX1ZvJd5xTzrtFQqHUB","C7epl8loIbJUj4cvvOUYZXqZX6w"]}
 
-      shared = shared
-      # fails due to https://github.com/basho/riak-erlang-client/issues/325
-      a = :riakc_pb_socket.get_index_eq(shared.pid, shared.bucket, {:binary_index, 'name'}, "foo")
-      IEx.pry
+      {:ok, results} = :riakc_pb_socket.get_index_eq(shared.pid, shared.bucket, {:binary_index, 'name'}, "John")
+      {:index_results_v1, keys, _, _} = results
 
+      expect Enum.member?(keys, shared.key) |> to(eq true)
     end
   end
 
-  context "with links" do
+  context "links" do
     @friend1 build(:user)
     @friend2 build(:user)
     @sibling build(:user)
@@ -154,18 +156,63 @@ defmodule ElixirRiakSpec do
 
     it "fetches the links via map reduce" do
 
+      #size = fn(_, _, _) -> [] end
       result = :riakc_pb_socket.mapred(shared.pid,
          [{shared.bucket, shared.key}],
          [
            {:link, "user", "friend", true},
+           #{:map, {:qfun, size}, :none, true},
+           #{:reduce, {:modfun, 'riak_kv_mapreduce', 'reduce_sum'}, :none, true}
          ]
        )
+
+       #IEx.pry
        # Note: map reduce seems to require code to be loaded on the box
-       #{:map, {:jsanon, "function (v) { return []; }"}, :undefined, true},
-       #{:reduce, {:modfun, 'riak_kv_mapreduce', 'reduce_sum'}, :none, true}
     end
 
     # X-Riak-Deleted in the object metadata with a value of true.
   end
 
+  context "search" do
+    # http://docs.basho.com/riak/kv/2.1.4/developing/usage/search/
+    before do
+      :ok = :riakc_pb_socket.create_search_index(shared.pid, "famous")
+      :ok = :riakc_pb_socket.set_search_index(shared.pid, shared.bucket, "famous")
+
+      co = :riakc_obj.new(shared.bucket, "liono",
+          "{\"name_s\":\"Lion-o\", \"age_i\":30, \"leader_b\":true}",
+          "application/json")
+      :ok = :riakc_pb_socket.put(shared.pid, co)
+
+      c1 = :riakc_obj.new(shared.bucket, "cheetara",
+          "{\"name_s\":\"Cheetara\", \"age_i\":28, \"leader_b\":false}",
+          "application/json")
+      :ok = :riakc_pb_socket.put(shared.pid, c1)
+
+      c2 = :riakc_obj.new(shared.bucket, "snarf",
+          "{\"name_s\":\"Snarf\", \"age_i\":43}",
+          "application/json")
+      :ok = :riakc_pb_socket.put(shared.pid, c2)
+
+      c3 = :riakc_obj.new(shared.bucket, "panthro",
+          "{\"name_s\":\"Panthro\", \"age_i\":36}",
+          "application/json")
+      :ok = :riakc_pb_socket.put(shared.pid, c3)
+
+    end
+
+    it "search by index" do
+
+      {:ok, {:search_results, [{index,result}|_], _, _}} = :riakc_pb_socket.search(shared.pid, "famous", "name_s:Lion*")
+
+      type  = :proplists.get_value("_yz_rt", result)
+      bucket = :proplists.get_value("_yz_rb", result)
+      key    = :proplists.get_value("_yz_rk", result)
+
+      {:ok, obj} = :riakc_pb_socket.get(shared.pid, {type, bucket}, key)
+
+      expect :riakc_obj.get_value(obj) |> to(eq "{\"name_s\":\"Lion-o\", \"age_i\":30, \"leader_b\":true}")
+    end
+
+  end
 end
