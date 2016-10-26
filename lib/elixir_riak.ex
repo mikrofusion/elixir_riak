@@ -17,4 +17,9 @@ defmodule ElixirRiak do
     opts = [strategy: :one_for_one, name: ElixirRiak.Supervisor]
     Supervisor.start_link(children, opts)
   end
+
+  def test(value, key_data, arg) do
+    #IEx.pry
+    []
+  end
 end

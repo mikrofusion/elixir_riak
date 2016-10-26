@@ -22,6 +22,83 @@ o = Riak.Object.create(bucket: "user", key: "my_key", data: "Han Solo")
 Riak.put(o)
 Riak.find("user", "my_key")
 
+https://github.com/docker/for-mac/issues/85
+http://basho.github.io/riak-erlang-client/
+
+http://www.galdiuz.com/mapred.html
+
+https://docs.basho.com/riak/kv/2.1.3/developing/app-guide/advanced-mapreduce/
+
+http://stackoverflow.com/questions/15950139/completely-confused-about-mapreduce-in-riak-erlangs-riakc-client
+
+
+https://github.com/drewkerrigan/riak-elixir-client
+http://docs.basho.com/riak/kv/2.1.4/configuring/load-balancing-proxy/
+http://docs.basho.com/riak/kv/2.1.4/using/reference/secondary-indexes/
+
+
+```
+ ~/d/elixir_riak   master *+…  erl -pa  _build/test/lib/riakc/ebin/ _build/test/lib/riak_pb/ebin/ _build/test/lib/protobuffs/ebin/
+
+Erlang/OTP 19 [erts-8.0.2] [source] [64-bit] [smp:8:8] [async-threads:10] [hipe] [kernel-poll:false] [dtrace]
+
+Eshell V8.0.2  (abort with ^G)
+1> {ok, Pid} = riakc_pb_socket:start_link("127.0.0.1", 28087).
+{ok,<0.59.0>}
+2> riakc_pb_socket:ping(Pid).
+pong
+
+
+Erlang/OTP 19 [erts-8.0.2] [source] [64-bit] [smp:8:8] [async-threads:10] [hipe] [kernel-poll:false] [dtrace]
+
+Eshell V8.0.2  (abort with ^G)
+1> {ok, Pid} = riakc_pb_socket:start_link("127.0.0.1", 28087).
+{ok,<0.59.0>}
+2> riakc_pb_socket:ping(Pid).
+pong
+3> riakc_pb_socket:get_index(Pid, <<"bucket">>, {binary_index, "name"}, <<"foobar">>).
+{error,<<"Error processing incoming message: error:{case_clause,\n                                          {rpbindexre"...>>}
+4>
+=ERROR REPORT==== 25-Oct-2016::19:46:53 ===
+** Generic server <0.59.0> terminating
+** Last message in was {tcp_closed,#Port<0.673>}
+** When Server state == {state,"127.0.0.1",28087,false,false,undefined,false,
+                               gen_tcp,undefined,
+                               {[],[]},
+                               1,[],infinity,undefined,undefined,undefined,
+                               undefined,[],100}
+** Reason for termination ==
+** disconnected
+** exception error: disconnected
+4>
+
+
+
+Erlang/OTP 19 [erts-8.0.2] [source] [64-bit] [smp:8:8] [async-threads:10] [hipe] [kernel-poll:false] [dtrace]
+
+Eshell V8.0.2  (abort with ^G)
+1> {ok, Pid} = riakc_pb_socket:start_link("127.0.0.1", 28087).
+{ok,<0.59.0>}
+2> riakc_pb_socket:ping(Pid).
+pong
+3> riakc_pb_socket:get_index(Pid, <<"bucket">>, {binary_index, "name"}, <<"foobar">>).
+{error,<<"Error processing incoming message: error:{case_clause,\n                                          {rpbindexre"...>>}
+4>
+=ERROR REPORT==== 25-Oct-2016::19:48:35 ===
+** Generic server <0.59.0> terminating
+** Last message in was {tcp_closed,#Port<0.673>}
+** When Server state == {state,"127.0.0.1",28087,false,false,undefined,false,
+                               gen_tcp,undefined,
+                               {[],[]},
+                               1,[],infinity,undefined,undefined,undefined,
+                               undefined,[],100}
+** Reason for termination ==
+** disconnected
+** exception error: disconnected
+4>
+
+```
+
 # list keys
 iex(22)> {:ok, pid} = Riak.Connection.start_link('127.0.0.1', 8087)
 {:ok, #PID<0.238.0>}

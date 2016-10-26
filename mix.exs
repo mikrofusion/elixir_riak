@@ -40,7 +40,8 @@ defmodule ElixirRiak.Mixfile do
   defp deps do
     [
       {:riakc, "~> 2.4"},
-      {:espec, "~> 1.1.0", only: :test}
+      {:espec, "~> 1.1.0", only: :test},
+      {:ex_machina, "~> 1.0", only: :test}
     ]
   end
 end
