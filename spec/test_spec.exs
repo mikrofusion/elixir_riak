@@ -13,6 +13,8 @@ defmodule ElixirRiakSpec do
   end
 
   context "riakc_obj" do
+    # http://basho.github.io/riak-erlang-client/riakc_obj.html
+
     it "contains methods to get riakc object values" do
       expect :riakc_obj.bucket(subject) |> to(eq shared.bucket)
       expect :riakc_obj.bucket_type(subject) |> to(eq :undefined)
@@ -25,6 +27,8 @@ defmodule ElixirRiakSpec do
   end
 
   context "riakc_pb_socket#put && riakc_pb_socket#get" do
+    # http://basho.github.io/riak-erlang-client/riakc_pb_socket.html
+
     before do
       {:ok, id} = :riakc_pb_socket.put(shared.pid, subject)
 
@@ -156,6 +160,7 @@ defmodule ElixirRiakSpec do
 
     it "fetches the links via map reduce" do
       # build in mapreduce https://github.com/basho/riak_kv/blob/master/src/riak_kv_mapreduce.erl
+      # http://basho.github.io/riak-erlang-client/riakc_map.html
 
       {:ok, [{0, _}, {1, [result1, result2]}]} = :riakc_pb_socket.mapred(shared.pid,
          [{shared.bucket, shared.key}],
@@ -184,6 +189,7 @@ defmodule ElixirRiakSpec do
 
   context "search" do
     # http://docs.basho.com/riak/kv/2.1.4/developing/usage/search/
+
     before do
       :ok = :riakc_pb_socket.create_search_index(shared.pid, "famous")
       :ok = :riakc_pb_socket.set_search_index(shared.pid, shared.bucket, "famous")
@@ -234,7 +240,7 @@ defmodule ElixirRiakSpec do
 
         counter = :riakc_counter.new()
         counter = :riakc_counter.increment(10, counter)
-        :riakc_pb_socket.update_type(shared.pid, {"counters", shared.bucket}, key, :riakc_counter.to_op(counter))
+        :ok = :riakc_pb_socket.update_type(shared.pid, {"counters", shared.bucket}, key, :riakc_counter.to_op(counter))
 
         # note value is equivalent to the server value
         0 = :riakc_counter.value(counter)
@@ -250,16 +256,42 @@ defmodule ElixirRiakSpec do
     end
 
     context "sets" do
+      # http://basho.github.io/riak-erlang-client/riakc_set.html
 
+      before do
+        {me, se, mi} = :erlang.timestamp
+        key = "#{me}#{se}#{mi}"
+
+        set = :riakc_set.new()
+        set = :riakc_set.add_element("foo", set)
+        set = :riakc_set.add_element("bar", set)
+
+        :ok = :riakc_pb_socket.update_type(shared.pid, {"sets", shared.bucket}, key, :riakc_set.to_op(set))
+
+        {:shared, key: key}
+      end
+
+      it "able to fetch the updated value" do
+        {:ok, set} = :riakc_pb_socket.fetch_type(shared.pid, {"sets", shared.bucket}, shared.key)
+
+        expect :riakc_set.value(set) |> to(eq ["bar", "foo"])
+      end
     end
 
     context "maps" do
+      context "with flags" do
+        # flags contain enable / disable  must be stored within maps
+      end
+
+      context "with registers" do
+      end
+    end
+
+    context "searching CRDTs" do
+      # searching CRDTs http://docs.basho.com/riak/kv/2.1.4/developing/usage/searching-data-types/
 
     end
 
-    # flags . only bear the value enable / disable  must be stored within maps
     # flags, registers, sets, maps
-    #
-    # searching CRDTs http://docs.basho.com/riak/kv/2.1.4/developing/usage/searching-data-types/
   end
 end
