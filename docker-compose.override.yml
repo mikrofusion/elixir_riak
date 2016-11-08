@@ -11,6 +11,7 @@ services:
     volumes:
       - "./riak/schemas:/etc/riak/schemas"
       - "./riak/logs:/var/log/riak"
+      - "./riak/beams:/etc/riak/beams"
       - coordinator_data:/var/lib/riak
 
   member_1:
@@ -18,6 +19,7 @@ services:
       - "11087:8087"
       - "11098:8098"
     volumes:
+      - "./riak/beams:/etc/riak/beams"
       - member_1_data:/var/lib/riak
 
   member_2:
@@ -25,6 +27,7 @@ services:
       - "12087:8087"
       - "12098:8098"
     volumes:
+      - "./riak/beams:/etc/riak/beams"
       - member_2_data:/var/lib/riak
 
   member_3:
@@ -32,6 +35,7 @@ services:
       - "13087:8087"
       - "13098:8098"
     volumes:
+      - "./riak/beams:/etc/riak/beams"
       - member_3_data:/var/lib/riak
 
   member_4:
@@ -39,6 +43,7 @@ services:
       - "14087:8087"
       - "14098:8098"
     volumes:
+      - "./riak/beams:/etc/riak/beams"
       - member_4_data:/var/lib/riak
 
 volumes:

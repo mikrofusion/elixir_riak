@@ -31,8 +31,6 @@ dev-init:
 # test container commands
 test-start:
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml -p riaktest up -d 
-	sleep 5
-	make test-init
 
 test-status:
 	docker-compose -p riaktest exec coordinator riak-admin cluster status

@@ -2,9 +2,9 @@ defmodule ElixirRiakSpec do
   use ESpec
 
   import ElixirRiak.Factory
-  require IEx
 
   import :riakc_pb_socket
+  require IEx
 
   @user build(:user)
 
@@ -155,19 +155,28 @@ defmodule ElixirRiakSpec do
     end
 
     it "fetches the links via map reduce" do
+      # build in mapreduce https://github.com/basho/riak_kv/blob/master/src/riak_kv_mapreduce.erl
 
-      #size = fn(_, _, _) -> [] end
-      result = :riakc_pb_socket.mapred(shared.pid,
+      {:ok, [{0, _}, {1, [result1, result2]}]} = :riakc_pb_socket.mapred(shared.pid,
          [{shared.bucket, shared.key}],
          [
            {:link, "user", "friend", true},
-           #{:map, {:qfun, size}, :none, true},
-           #{:reduce, {:modfun, 'riak_kv_mapreduce', 'reduce_sum'}, :none, true}
+           {:map, {:modfun, :riak_kv_mapreduce, :map_identity}, :none, true}
          ]
        )
 
-       #IEx.pry
-       # Note: map reduce seems to require code to be loaded on the box
+      # note: every once in a while result1 and result2 are swaped - which causes the spec to fail.  fix this.
+      {:r_object, bucket1, key1, [{:r_content, dict1, data1}], _, _, _} = result1
+      expect bucket1 |> to(eq "user")
+      expect key1 |> to(eq @friend1.name)
+      expect :erlang.binary_to_term(data1) |> to(eq @friend1)
+      expect :dict.fetch_keys(dict1) |> to(eq ["X-Riak-VTag", "content-type", "index", "X-Riak-Last-Modified"])
+
+      {:r_object, bucket2, key2, [{:r_content, dict2, data2}], _, _, _} = result2
+      expect bucket2 |> to(eq "user")
+      expect key2 |> to(eq @friend2.name)
+      expect :erlang.binary_to_term(data2) |> to(eq @friend2)
+      expect :dict.fetch_keys(dict2) |> to(eq ["X-Riak-VTag", "content-type", "index", "X-Riak-Last-Modified"])
     end
 
     # X-Riak-Deleted in the object metadata with a value of true.
@@ -202,7 +211,6 @@ defmodule ElixirRiakSpec do
     end
 
     it "search by index" do
-
       {:ok, {:search_results, [{index,result}|_], _, _}} = :riakc_pb_socket.search(shared.pid, "famous", "name_s:Lion*")
 
       type  = :proplists.get_value("_yz_rt", result)
@@ -213,6 +221,45 @@ defmodule ElixirRiakSpec do
 
       expect :riakc_obj.get_value(obj) |> to(eq "{\"name_s\":\"Lion-o\", \"age_i\":30, \"leader_b\":true}")
     end
+  end
 
+  context "Conflict-free replicated data types" do
+    # Note: these test require that make test-init is ran prior
+
+    context "counters" do
+
+      before do
+        {me, se, mi} = :erlang.timestamp
+        key = "#{me}#{se}#{mi}"
+
+        counter = :riakc_counter.new()
+        counter = :riakc_counter.increment(10, counter)
+        :riakc_pb_socket.update_type(shared.pid, {"counters", shared.bucket}, key, :riakc_counter.to_op(counter))
+
+        # note value is equivalent to the server value
+        0 = :riakc_counter.value(counter)
+
+        {:shared, key: key}
+      end
+
+      it "able to fetch the updated value" do
+        {:ok, counter} = :riakc_pb_socket.fetch_type(shared.pid, {"counters", shared.bucket}, shared.key)
+
+        expect :riakc_counter.value(counter) |> to(eq 10)
+      end
+    end
+
+    context "sets" do
+
+    end
+
+    context "maps" do
+
+    end
+
+    # flags . only bear the value enable / disable  must be stored within maps
+    # flags, registers, sets, maps
+    #
+    # searching CRDTs http://docs.basho.com/riak/kv/2.1.4/developing/usage/searching-data-types/
   end
 end

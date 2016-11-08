@@ -10,6 +10,8 @@ services:
     environment:
       - CLUSTER_NAME=riakkv-test
     network_mode: bridge
+    volumes:
+      - "./riak/beams_test:/etc/riak/beams"
 
   member_1:
     image: "riak-kv-test"
@@ -24,6 +26,8 @@ services:
     environment:
       - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
+    volumes:
+      - "./riak/beams_test:/etc/riak/beams"
 
   member_2:
     image: "riak-kv-test"
@@ -38,6 +42,8 @@ services:
     environment:
       - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
+    volumes:
+      - "./riak/beams_test:/etc/riak/beams"
 
   member_3:
     image: "riak-kv-test"
@@ -52,6 +58,8 @@ services:
     environment:
       - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
+    volumes:
+      - "./riak/beams_test:/etc/riak/beams"
 
   member_4:
     image: "riak-kv-test"
@@ -66,3 +74,5 @@ services:
     environment:
       - CLUSTER_NAME=riakkv-test
       - COORDINATOR_NODE=coordinator
+    volumes:
+      - "./riak/beams_test:/etc/riak/beams"
