@@ -125,6 +125,8 @@ defmodule ElixirRiakSpec do
 
       expect Enum.member?(keys, shared.key) |> to(eq true)
     end
+
+    # TODO: would be nice to be able to mapreduce on this: https://github.com/basho/riak-erlang-client/issues/330
   end
 
   context "links" do
@@ -226,11 +228,19 @@ defmodule ElixirRiakSpec do
       {:ok, obj} = :riakc_pb_socket.get(shared.pid, {type, bucket}, key)
 
       expect :riakc_obj.get_value(obj) |> to(eq "{\"name_s\":\"Lion-o\", \"age_i\":30, \"leader_b\":true}")
+
+      # todo: search + map-reduce like with HTTP
+      # https://github.com/basho/riak-erlang-client/issues/329
     end
+
   end
 
   context "Conflict-free replicated data types" do
     # Note: these test require that make test-init is ran prior
+    #
+    # What separates Riak Data Types from other Riak objects is that you interact with them transactionally,
+    # meaning that changing Data Types involves sending messages to Riak about what changes should be made rather than fetching the whole object and modifying it on the client side.
+    # src: http://basho.com/posts/technical/how-to-build-a-client-library-for-riak-2-0/
 
     context "counters" do
 
@@ -278,12 +288,66 @@ defmodule ElixirRiakSpec do
       end
     end
 
-    context "maps" do
-      context "with flags" do
-        # flags contain enable / disable  must be stored within maps
+    context "maps (with flags, registers, sets, counters, and maps)" do
+      # http://basho.github.io/riak-erlang-client/riakc_map.html
+
+      before do
+        {me, se, mi} = :erlang.timestamp
+        key = "#{me}#{se}#{mi}"
+
+        map = :riakc_map.new()
+
+
+        # Registers are essentially named binaries (like strings).
+        # Any binary value can act as the value of a register.
+        # Like flags, registers cannot be used on their own and must be embedded in Riak maps.
+        map = :riakc_map.update({"reg", :register},
+          fn(r) -> :riakc_register.set("foo", r) end,
+        map)
+
+        map = :riakc_map.update({"counter", :counter},
+          fn(c) -> :riakc_counter.increment(10, c) end,
+        map)
+
+        map = :riakc_map.update({"flag", :flag},
+          fn(f) -> :riakc_flag.enable(f) end,
+        map)
+
+        map = :riakc_map.update({"set", :set},
+          fn(s) -> :riakc_set.add_element("foo", s) end,
+        map)
+
+        map = :riakc_map.update({"map", :map}, fn(s) ->
+          :riakc_map.update({"map", :map}, fn(c) ->
+            c = :riakc_map.update({"set", :set},
+              fn(s) -> :riakc_set.add_element("biz", s) end,
+            c)
+            :riakc_map.update({"flag1", :flag},
+              fn(f) -> :riakc_flag.enable(f) end,
+            c)
+          end, s)
+        end, map)
+
+        :ok = :riakc_pb_socket.update_type(shared.pid, {"maps", shared.bucket}, key, :riakc_map.to_op(map))
+
+        {:shared, key: key}
       end
 
-      context "with registers" do
+      it "allows you to fetch the map attributes" do
+        {:ok, map} = :riakc_pb_socket.fetch_type(shared.pid, {"maps", shared.bucket}, shared.key)
+
+        expect :riakc_map.fetch_keys(map) |> to(eq [{"counter", :counter}, {"flag", :flag}, {"map", :map}, {"reg", :register}, {"set", :set}])
+        expect :riakc_map.fetch({"reg", :register}, map) |> to(eq "foo")
+        expect :riakc_map.fetch({"counter", :counter}, map) |> to(eq 10)
+        expect :riakc_map.fetch({"flag", :flag}, map) |> to(eq true)
+        expect :riakc_map.fetch({"set", :set}, map) |> to(eq ["foo"])
+
+        sub_map = :riakc_map.fetch({"map", :map}, map)
+
+        # TODO: understand why map comes back as an array and not a map object
+        # https://github.com/basho/riak-erlang-client/issues/328
+        expect sub_map |> to(eq [{{"map", :map}, [{{"flag1", :flag}, true}, {{"set", :set}, ["biz"]}]}])
+
       end
     end
 
@@ -291,7 +355,5 @@ defmodule ElixirRiakSpec do
       # searching CRDTs http://docs.basho.com/riak/kv/2.1.4/developing/usage/searching-data-types/
 
     end
-
-    # flags, registers, sets, maps
   end
 end
