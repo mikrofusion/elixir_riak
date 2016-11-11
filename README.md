@@ -1,5 +1,7 @@
 # ElixirRiak
 
+TODO add nginx or HAproxy
+
 ```
 docker-compose exec coordinator riak-admin cluster status
 ```

@@ -4,7 +4,6 @@ defmodule ElixirRiakSpec do
   import ElixirRiak.Factory
 
   import :riakc_pb_socket
-  require IEx
 
   @user build(:user)
 
@@ -216,6 +215,7 @@ defmodule ElixirRiakSpec do
           "application/json")
       :ok = :riakc_pb_socket.put(shared.pid, c3)
 
+      :timer.sleep(1000) # note: appears it takes some time to index
     end
 
     it "search by index" do
@@ -237,6 +237,8 @@ defmodule ElixirRiakSpec do
 
   context "Conflict-free replicated data types" do
     # Note: these test require that make test-init is ran prior
+    # if not you'll get an error similar to this:
+    # ** (MatchError) no match of right hand side value: {:error, "Error no bucket type `<<\"counters\">>`"}
     #
     # What separates Riak Data Types from other Riak objects is that you interact with them transactionally,
     # meaning that changing Data Types involves sending messages to Riak about what changes should be made rather than fetching the whole object and modifying it on the client side.
@@ -353,6 +355,119 @@ defmodule ElixirRiakSpec do
 
     context "searching CRDTs" do
       # searching CRDTs http://docs.basho.com/riak/kv/2.1.4/developing/usage/searching-data-types/
+      #
+      # issue opened for setting search indexes against a full type
+      # https://github.com/basho/riak-erlang-client/issues/331
+
+      context "searching counters" do
+        before do
+          {me, se, mi} = :erlang.timestamp
+          search = "#{me}#{se}#{mi}"
+
+          :ok = :riakc_pb_socket.create_search_index(shared.pid, search)
+
+          # counter
+          :ok = :riakc_pb_socket.set_search_index(shared.pid, {"counters", shared.bucket}, search)
+
+          christopher_hitchens_counter = :riakc_counter.new()
+          hitchens_counter1 = :riakc_counter.increment(10, christopher_hitchens_counter)
+          joan_rivers_counter = :riakc_counter.new()
+          rivers_counter1 = :riakc_counter.increment(25, joan_rivers_counter)
+
+          :ok = :riakc_pb_socket.update_type(shared.pid, {"counters", shared.bucket}, "#{search}1", :riakc_counter.to_op(hitchens_counter1))
+          :ok = :riakc_pb_socket.update_type(shared.pid, {"counters", shared.bucket}, "#{search}2", :riakc_counter.to_op(rivers_counter1))
+
+          :timer.sleep(1000) # note: appears it takes some time to index
+
+          {:shared, search: search}
+        end
+
+        it "allows you to fetch the results" do
+          {:ok, {:search_results, results, _, _}} = :riakc_pb_socket.search(shared.pid, shared.search, "counter:[20 TO *]")
+
+          expect Enum.count(results) |> to(eq 1)
+          [{index,result}|_] = results
+
+          type  = :proplists.get_value("_yz_rt", result)
+          bucket = :proplists.get_value("_yz_rb", result)
+          key    = :proplists.get_value("_yz_rk", result)
+
+          expect type |> to(eq "counters")
+          expect bucket |> to(eq shared.bucket)
+          expect key |> to(eq "#{shared.search}2")
+        end
+      end
+
+      context "searching sets" do
+        before do
+          {me, se, mi} = :erlang.timestamp
+          search = "#{me}#{se}#{mi}"
+
+          :ok = :riakc_pb_socket.create_search_index(shared.pid, search)
+
+          # set
+          :ok = :riakc_pb_socket.set_search_index(shared.pid, {"sets", shared.bucket}, search)
+
+          set1 = :riakc_set.new()
+          set1 = :riakc_set.add_element("foo", set1)
+          set1 = :riakc_set.add_element("bar", set1)
+
+
+          set2 = :riakc_set.new()
+          set2 = :riakc_set.add_element("biz", set2)
+          set2 = :riakc_set.add_element("baz", set2)
+
+          :ok = :riakc_pb_socket.update_type(shared.pid, {"sets", shared.bucket}, "#{search}1", :riakc_set.to_op(set1))
+          :ok = :riakc_pb_socket.update_type(shared.pid, {"sets", shared.bucket}, "#{search}2", :riakc_set.to_op(set2))
+
+          :timer.sleep(1000) # note: appears it takes some time to index
+
+          {:shared, search: search}
+        end
+
+        it "allows you to fetch the results" do
+          {:ok, {:search_results, results, _, _}} = :riakc_pb_socket.search(shared.pid, shared.search, "set:foo")
+
+          expect Enum.count(results) |> to(eq 1)
+          [{index,result}|_] = results
+
+          type  = :proplists.get_value("_yz_rt", result)
+          bucket = :proplists.get_value("_yz_rb", result)
+          key    = :proplists.get_value("_yz_rk", result)
+          values = :proplists.get_all_values("set", result)
+
+          expect type |> to(eq "sets")
+          expect bucket |> to(eq shared.bucket)
+          expect key |> to(eq "#{shared.search}1")
+          expect values |> to(eq ["bar", "foo"])
+        end
+      end
+
+      context "searching maps" do
+        before do
+          {me, se, mi} = :erlang.timestamp
+          search = "#{me}#{se}#{mi}"
+
+          :ok = :riakc_pb_socket.create_search_index(shared.pid, search)
+          :ok = :riakc_pb_socket.set_search_index(shared.pid, {"maps", shared.bucket}, search)
+
+          map = :riakc_map.new()
+          map = :riakc_map.update({"reg", :register},
+            fn(r) -> :riakc_register.set("foo", r) end,
+          map)
+
+          :ok = :riakc_pb_socket.update_type(shared.pid, {"maps", shared.bucket}, "#{search}", :riakc_map.to_op(map))
+
+          :timer.sleep(1000) # note: appears it takes some time to index
+
+          {:shared, search: search}
+        end
+
+        it "allows you to fetch the results" do
+          # doesn't seem to work, looking for help here:
+          # https://github.com/basho/riak-erlang-client/issues/332
+        end
+      end
 
     end
   end
