@@ -299,7 +299,6 @@ defmodule ElixirRiakSpec do
 
         map = :riakc_map.new()
 
-
         # Registers are essentially named binaries (like strings).
         # Any binary value can act as the value of a register.
         # Like flags, registers cannot be used on their own and must be embedded in Riak maps.
@@ -468,7 +467,6 @@ defmodule ElixirRiakSpec do
           # https://github.com/basho/riak-erlang-client/issues/332
         end
       end
-
     end
   end
 end
