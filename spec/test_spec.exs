@@ -444,27 +444,25 @@ defmodule ElixirRiakSpec do
 
       context "searching maps" do
         before do
-          {me, se, mi} = :erlang.timestamp
-          search = "#{me}#{se}#{mi}"
-
-          :ok = :riakc_pb_socket.create_search_index(shared.pid, search)
-          :ok = :riakc_pb_socket.set_search_index(shared.pid, {"maps", shared.bucket}, search)
+          :ok = :riakc_pb_socket.create_search_index(shared.pid, "map_search")
+          :ok = :riakc_pb_socket.set_search_index(shared.pid, {"maps", "bucket"}, "map_search")
 
           map = :riakc_map.new()
           map = :riakc_map.update({"reg", :register},
             fn(r) -> :riakc_register.set("foo", r) end,
           map)
 
-          :ok = :riakc_pb_socket.update_type(shared.pid, {"maps", shared.bucket}, "#{search}", :riakc_map.to_op(map))
+          :ok = :riakc_pb_socket.update_type(shared.pid, {"maps", "bucket"}, "key", :riakc_map.to_op(map))
 
           :timer.sleep(1000) # note: appears it takes some time to index
-
-          {:shared, search: search}
         end
 
         it "allows you to fetch the results" do
           # doesn't seem to work, looking for help here:
           # https://github.com/basho/riak-erlang-client/issues/332
+          {:ok, {:search_results, results, _, _}} = :riakc_pb_socket.search(shared.pid, "map_search", "maps:*")
+
+          expect Enum.count(results) |> to(eq 1)
         end
       end
     end
